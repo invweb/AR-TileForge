@@ -22,10 +22,12 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.material3.Button
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -87,6 +89,7 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainContent(modifier: Modifier = Modifier) {
     val context = LocalContext.current
@@ -107,17 +110,10 @@ fun MainContent(modifier: Modifier = Modifier) {
     
     Scaffold(
         topBar = {
-            Column(
-                modifier = Modifier
-                    .background(MaterialTheme.colorScheme.primary)
-                    .padding(8.dp)
-            ) {
-                Text(
-                    text = "AR Tile Map",
-                    color = MaterialTheme.colorScheme.onPrimary,
-                    style = MaterialTheme.typography.headlineSmall
-                )
-            }
+            TopAppBar(
+                title = { Text("AR Tile Map") },
+                modifier = Modifier.background(MaterialTheme.colorScheme.primary)
+            )
         },
         bottomBar = {
             Column {
