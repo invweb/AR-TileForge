@@ -13,6 +13,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -144,54 +145,56 @@ fun MainContent(hasPermission: Boolean, modifier: Modifier = Modifier) {
                 .fillMaxSize()
                 .padding(paddingValues)
                 .background(Color(0xFFF5F5F5)),
-            contentAlignment = Alignment.Center
+            contentAlignment = Alignment.TopCenter
         ) {
             // Render tiles in a grid
             val tileMap = tiles.values.associateBy { Pair(it.x, it.y) }
             val bounds = TileGenerator.calculateBounds(tileMap)
             
-                    if (bounds.width > 0 && bounds.height > 0) {
-                        LazyVerticalGrid(
-                            columns = GridCells.Fixed(bounds.width),
-                            horizontalArrangement = Arrangement.spacedBy(2.dp),
-                            verticalArrangement = Arrangement.spacedBy(2.dp),
-                            modifier = Modifier.padding(horizontal = 8.dp)
+            if (bounds.width > 0 && bounds.height > 0) {
+                Column(
+                    modifier = Modifier.padding(horizontal = 8.dp),
+                    verticalArrangement = Arrangement.spacedBy(2.dp)
+                ) {
+                    for (y in bounds.minY..bounds.maxY) {
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(2.dp)
                         ) {
-                            for (y in bounds.minY..bounds.maxY) {
-                                items(bounds.width) { x ->
-                                    val tile = tileMap[Pair(bounds.minX + x, y)]
-                                    if (tile != null) {
-                                        TileRenderer(
-                                            tileType = tile.type,
-                                            modifier = Modifier
-                                                .size(48.dp)
-                                                .clickable {
-                                                    println("Clicking tile at (${tile.x}, ${tile.y}), changing to ${selectedTileType.name}")
-                                                    val newTile = tile.copy(type = selectedTileType)
-                                                    tiles[packInt(tile.x, tile.y)] = newTile
-                                                }
-                                        )
-                                    } else {
-                                        // Empty cell - add new tile when clicked
-                                        Box(
-                                            modifier = Modifier
-                                                .size(48.dp)
-                                                .background(Color(0xFFE0E0E0))
-                                                .clickable {
-                                                    val newTile = TileData(
-                                                        type = selectedTileType,
-                                                        x = bounds.minX + x,
-                                                        y = y
-                                                    )
-                                                    println("Placing tile at (${newTile.x}, ${newTile.y}) type=${newTile.type.name}")
-                                                    tiles[packInt(newTile.x, newTile.y)] = newTile
-                                                }
-                                        )
-                                    }
+                            for (x in bounds.minX..bounds.maxX) {
+                                val tile = tileMap[Pair(x, y)]
+                                if (tile != null) {
+                                    TileRenderer(
+                                        tileType = tile.type,
+                                        modifier = Modifier
+                                            .size(48.dp)
+                                            .clickable {
+                                                println("Clicking tile at (${tile.x}, ${tile.y}), changing to ${selectedTileType.name}")
+                                                val newTile = tile.copy(type = selectedTileType)
+                                                tiles[packInt(tile.x, tile.y)] = newTile
+                                            }
+                                    )
+                                } else {
+                                    // Empty cell - add new tile when clicked
+                                    Box(
+                                        modifier = Modifier
+                                            .size(48.dp)
+                                            .background(Color(0xFFE0E0E0))
+                                            .clickable {
+                                                val newTile = TileData(
+                                                    type = selectedTileType,
+                                                    x = x,
+                                                    y = y
+                                                )
+                                                println("Placing tile at (${newTile.x}, ${newTile.y}) type=${newTile.type.name}")
+                                                tiles[packInt(newTile.x, newTile.y)] = newTile
+                                            }
+                                    )
                                 }
                             }
                         }
-                    } else {
+                    }
+                }
+            } else {
                 Text(
                     text = "No tiles placed yet",
                     style = MaterialTheme.typography.bodyMedium
