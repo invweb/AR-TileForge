@@ -161,9 +161,7 @@ fun MainContent(modifier: Modifier = Modifier) {
                     columns = GridCells.Fixed(bounds.width),
                     horizontalArrangement = Arrangement.spacedBy(2.dp),
                     verticalArrangement = Arrangement.spacedBy(2.dp),
-                    modifier = Modifier
-                        .fillMaxSize(),
-                    state = rememberLazyGridState()
+                    modifier = Modifier.padding(horizontal = 8.dp)
                 ) {
                     for (y in bounds.minY..bounds.maxY) {
                         items(bounds.width) { x ->
