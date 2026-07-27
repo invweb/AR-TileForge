@@ -27,7 +27,6 @@ fun TileRenderer(
     
     Box(
         modifier = modifier
-            .size(size)
             .background(tileColor)
             .border(2.dp, borderColor)
     )

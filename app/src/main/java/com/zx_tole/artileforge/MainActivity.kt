@@ -166,7 +166,7 @@ fun MainContent(hasPermission: Boolean, modifier: Modifier = Modifier) {
                                             modifier = Modifier
                                                 .size(48.dp)
                                                 .clickable {
-                                                    // Replace existing tile with selected type
+                                                    println("Clicking tile at (${tile.x}, ${tile.y}), changing to ${selectedTileType.name}")
                                                     val newTile = tile.copy(type = selectedTileType)
                                                     tiles[packInt(tile.x, tile.y)] = newTile
                                                 }
@@ -183,6 +183,7 @@ fun MainContent(hasPermission: Boolean, modifier: Modifier = Modifier) {
                                                         x = bounds.minX + x,
                                                         y = y
                                                     )
+                                                    println("Placing tile at (${newTile.x}, ${newTile.y}) type=${newTile.type.name}")
                                                     tiles[packInt(newTile.x, newTile.y)] = newTile
                                                 }
                                         )
