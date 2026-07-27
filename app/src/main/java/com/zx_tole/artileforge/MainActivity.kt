@@ -53,7 +53,6 @@ import com.zx_tole.artileforge.ui.theme.ARTileForgeTheme
 
 class MainActivity : ComponentActivity() {
 
-    private var hasCameraPermission by mutableStateOf(false)
     private lateinit var cameraPermissionLauncher: androidx.activity.result.ActivityResultLauncher<String>
 
     @SuppressLint("RestrictedApi")
@@ -65,15 +64,13 @@ class MainActivity : ComponentActivity() {
         cameraPermissionLauncher = registerForActivityResult(
             ActivityResultContracts.RequestPermission()
         ) { isGranted ->
-            hasCameraPermission = isGranted
+            // Permission granted callback
         }
 
         // Check and request camera permission
         val hasPermission = ContextCompat.checkSelfPermission(
             this, Manifest.permission.CAMERA
         ) == PackageManager.PERMISSION_GRANTED
-
-        hasCameraPermission = hasPermission
 
         if (!hasPermission) {
             cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
@@ -82,7 +79,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             ARTileForgeTheme {
                 Surface {
-                    MainContent()
+                    MainContent(hasPermission)
                 }
             }
         }
@@ -91,7 +88,7 @@ class MainActivity : ComponentActivity() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MainContent(modifier: Modifier = Modifier) {
+fun MainContent(hasPermission: Boolean, modifier: Modifier = Modifier) {
     val context = LocalContext.current
     
     val initialTiles = mutableMapOf<Int, TileData>().apply {
@@ -220,6 +217,6 @@ private fun packInt(x: Int, y: Int): Int {
 @Composable
 fun MainContentPreview() {
     ARTileForgeTheme {
-        MainContent()
+        MainContent(hasPermission = true)
     }
 }
