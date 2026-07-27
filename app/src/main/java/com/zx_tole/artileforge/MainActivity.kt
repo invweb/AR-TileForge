@@ -58,7 +58,7 @@ class MainActivity : ComponentActivity() {
     @SuppressLint("RestrictedApi")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
+        // Remove enableEdgeToEdge() to let Scaffold handle layout properly
 
         // Register permission launcher
         cameraPermissionLauncher = registerForActivityResult(
