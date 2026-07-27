@@ -2,6 +2,7 @@ package com.zx_tole.artileforge.tile
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
@@ -19,7 +20,8 @@ import androidx.compose.ui.unit.dp
 fun TileRenderer(
     tileType: TileType,
     size: Dp = 48.dp,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onClick: (() -> Unit)? = null
 ) {
     val tileColor = Color(android.graphics.Color.parseColor(tileType.color))
     val borderColor = tileType.borderAdjustment
@@ -29,5 +31,6 @@ fun TileRenderer(
         modifier = modifier
             .background(tileColor)
             .border(2.dp, borderColor)
+            .let { if (onClick != null) it.clickable { onClick() } else it }
     )
 }
