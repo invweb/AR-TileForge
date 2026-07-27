@@ -134,6 +134,7 @@ fun MainContent(hasPermission: Boolean, modifier: Modifier = Modifier) {
                     modifier = Modifier
                         .background(MaterialTheme.colorScheme.background)
                         .padding(8.dp)
+                        .padding(bottom = 16.dp)
                 )
             }
         }
