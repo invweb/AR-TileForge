@@ -160,7 +160,7 @@ fun MainContent(modifier: Modifier = Modifier) {
                     columns = GridCells.Fixed(bounds.width),
                     horizontalArrangement = Arrangement.spacedBy(2.dp),
                     verticalArrangement = Arrangement.spacedBy(2.dp),
-                    modifier = Modifier.align(Alignment.Center)
+                    modifier = Modifier
                 ) {
                     for (y in bounds.minY..bounds.maxY) {
                         items(bounds.width) { x ->
