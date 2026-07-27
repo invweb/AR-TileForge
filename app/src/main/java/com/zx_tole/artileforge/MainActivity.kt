@@ -50,25 +50,27 @@ import com.zx_tole.artileforge.ui.theme.ARTileForgeTheme
 
 class MainActivity : ComponentActivity() {
 
-    private val cameraPermissionLauncher = registerForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { isGranted ->
-        if (isGranted) {
-            // Permission granted
-        } else {
-            // Permission denied - show message
-        }
-    }
+    private var hasCameraPermission by mutableStateOf(false)
+    private lateinit var cameraPermissionLauncher: androidx.activity.result.ActivityResultLauncher<String>
 
     @SuppressLint("RestrictedApi")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
+        // Register permission launcher
+        cameraPermissionLauncher = registerForActivityResult(
+            ActivityResultContracts.RequestPermission()
+        ) { isGranted ->
+            hasCameraPermission = isGranted
+        }
+
         // Check and request camera permission
         val hasPermission = ContextCompat.checkSelfPermission(
             this, Manifest.permission.CAMERA
         ) == PackageManager.PERMISSION_GRANTED
+
+        hasCameraPermission = hasPermission
 
         if (!hasPermission) {
             cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
