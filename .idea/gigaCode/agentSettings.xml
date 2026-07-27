@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="GigaCodeAgentSettings">
+    <option name="autoApprovedCommands">
+      <list>
+        <Execute>
+          <option name="pattern" value="mkdir -p /Users/vasiliikarpenko/AndroidStudioProjects/ARTileForge/app/src/main/java/com/zx_tole/artileforge/tile /Users/vasiliikarpenko/AndroidStudioProjects/ARTileForge/app/src/main/java/com/zx_tole/artileforge/export /Users/vasiliikarpenko/AndroidStudioProjects/ARTileForge/app/src/main/java/com/zx_tole/artileforge/ui" />
+        </Execute>
+        <Execute>
+          <option name="pattern" value="cd *" />
+        </Execute>
+        <Execute>
+          <option name="pattern" value="./gradlew *" />
+        </Execute>
+        <Execute>
+          <option name="pattern" value="tail *" />
+        </Execute>
+        <Execute>
+          <option name="pattern" value="git status" />
+        </Execute>
+        <Execute>
+          <option name="pattern" value="git init" />
+        </Execute>
+        <Execute>
+          <option name="pattern" value="git add *" />
+        </Execute>
+        <Execute>
+          <option name="pattern" value="git config *" />
+        </Execute>
+        <Execute>
+          <option name="pattern" value="git commit *" />
+        </Execute>
+        <Execute>
+          <option name="pattern" value="git remote *" />
+        </Execute>
+        <Execute>
+          <option name="pattern" value="git branch *" />
+        </Execute>
+        <Execute>
+          <option name="pattern" value="git push *" />
+        </Execute>
+      </list>
+    </option>
+  </component>
+</project>
