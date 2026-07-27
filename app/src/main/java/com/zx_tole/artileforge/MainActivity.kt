@@ -9,6 +9,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -153,7 +154,9 @@ fun MainContent(hasPermission: Boolean, modifier: Modifier = Modifier) {
             
             if (bounds.width > 0 && bounds.height > 0) {
                 Column(
-                    modifier = Modifier.padding(horizontal = 8.dp),
+                    modifier = Modifier
+                        .padding(horizontal = 8.dp)
+                        .clickable { println("Column clicked") },
                     verticalArrangement = Arrangement.spacedBy(2.dp)
                 ) {
                     for (y in bounds.minY..bounds.maxY) {
@@ -167,28 +170,34 @@ fun MainContent(hasPermission: Boolean, modifier: Modifier = Modifier) {
                                         tileType = tile.type,
                                         modifier = Modifier
                                             .size(48.dp)
-                                            .clickable {
-                                                println("Clicking tile at (${tile.x}, ${tile.y}), changing to ${selectedTileType.name}")
-                                                val newTile = tile.copy(type = selectedTileType)
-                                                tiles[packInt(tile.x, tile.y)] = newTile
-                                            }
+                                            .border(3.dp, if (tile.type == selectedTileType) Color(0xFF00FF00) else Color.Transparent),
+                                        onClick = {
+                                            println("Clicking tile at (${tile.x}, ${tile.y}), changing to ${selectedTileType.name}")
+                                            val newTile = tile.copy(type = selectedTileType)
+                                            tiles[packInt(tile.x, tile.y)] = newTile
+                                        }
                                     )
-                                } else {
+                } else {
                                     // Empty cell - add new tile when clicked
                                     Box(
                                         modifier = Modifier
                                             .size(48.dp)
                                             .background(Color(0xFFE0E0E0))
-                                            .clickable {
-                                                val newTile = TileData(
-                                                    type = selectedTileType,
-                                                    x = x,
-                                                    y = y
-                                                )
-                                                println("Placing tile at (${newTile.x}, ${newTile.y}) type=${newTile.type.name}")
-                                                tiles[packInt(newTile.x, newTile.y)] = newTile
-                                            }
-                                    )
+                                    ) {
+                                        Box(
+                                            modifier = Modifier
+                                                .fillMaxSize()
+                                                .clickable {
+                                                    val newTile = TileData(
+                                                        type = selectedTileType,
+                                                        x = x,
+                                                        y = y
+                                                    )
+                                                    println("Placing tile at (${newTile.x}, ${newTile.y}) type=${newTile.type.name}")
+                                                    tiles[packInt(newTile.x, newTile.y)] = newTile
+                                                }
+                                        )
+                                    }
                                 }
                             }
                         }

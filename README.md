@@ -6,7 +6,7 @@ Procedural AR tile map generator for tabletop strategy games. Generate and place
 ![Android](https://img.shields.io/badge/android-14+-blue)
 ![Kotlin](https://img.shields.io/badge/kotlin-2.2+-orange)
 
-## Features
+## ✨ Features
 
 ### 🌐 AR-Based Tile Placement
 - Detects flat surfaces (tables, floors, walls) using ARCore
@@ -27,6 +27,14 @@ Procedural AR tile map generator for tabletop strategy games. Generate and place
 - **JSON**: Coordinate-based map data for any engine
 - **PNG**: Sprite sheet atlas with tile mappings
 - Ready for import into libGDX, KorGE, Unity, or Godot
+
+### 🎯 Interactive Tile Editor
+- **Tap to Select**: Choose tile type from palette (visual indicator shows selection)
+- **Tap to Place**: Click empty cells to add tiles
+- **Tap to Change**: Click existing tiles to change their type
+- **Instant Feedback**: Tiles highlight green when type matches selection
+- **Clear Map**: One-tap cleanup with confirmation
+- **Export Tools**: Save maps as JSON and PNG sprite sheets
 
 ## Tech Stack
 
@@ -84,17 +92,16 @@ The app requires camera access for AR functionality:
 - Point camera at a flat surface (table, floor, or wall)
 - Wait for plane detection confirmation
 
-### 3. Place Tiles
-- Select tile type from the palette at bottom
-- Tap to place tiles on the detected surface
-- Tiles auto-arrange in grid pattern
+### 3. Tile Editor Usage
+- **Select a tile type** from the palette at the bottom (click a colored button)
+  - The selected button will show a **white border** as visual feedback
+- **Place a tile**: Tap on empty cells in the grid
+- **Change existing tile**: Tap any placed tile to change its type to selected
+  - The tile will highlight with a **green border** if it already matches the selected type
+- **Clear entire map**: Tap "Clear Map" button
+- **View statistics**: Tile count and map bounds displayed in controls
 
-### 4. Customize
-- Change tile type from palette
-- Clear entire map with "Clear Map" button
-- View tile count and map bounds
-
-### 5. Export
+### 4. Export
 - Tap "Export" to save your map
 - Find exported files in `Android/data/com.zx_tole.artileforge/files/exports/`
 
@@ -163,6 +170,7 @@ app/src/main/java/com/zx_tole/artileforge/
 - [ ] Undo/Redo functionality
 - [ ] Advanced placement rules
 - [ ] Tile rotation support
+- [ ] Tile editing with visual feedback (selected type highlighting)
 
 ### Phase 3 Features
 - [ ] 3D rendering with libGDX

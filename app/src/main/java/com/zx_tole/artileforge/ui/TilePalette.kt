@@ -1,6 +1,7 @@
 package com.zx_tole.artileforge.ui
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -59,10 +60,11 @@ fun TileTypeButton(
             .size(56.dp)
             .background(tileType.toComposeColor())
             .clickable { onClick() }
+            .border(2.dp, if (isSelected) Color.White else Color(0x66000000))
     ) {
         Text(
             text = tileType.displayName,
-            color = if (isSelected) Color.White else Color.Black,
+            color = if (isSelected) Color.White else Color(0xE0000000),
             modifier = Modifier.padding(4.dp)
         )
     }

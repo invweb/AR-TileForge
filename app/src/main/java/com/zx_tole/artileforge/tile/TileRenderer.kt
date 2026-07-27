@@ -31,6 +31,6 @@ fun TileRenderer(
         modifier = modifier
             .background(tileColor)
             .border(2.dp, borderColor)
-            .let { if (onClick != null) it.clickable { onClick() } else it }
+            .clickable { onClick?.invoke() }
     )
 }
