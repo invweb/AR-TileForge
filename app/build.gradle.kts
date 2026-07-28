@@ -53,6 +53,8 @@ dependencies {
     implementation(libs.androidx.runtime)
     implementation(libs.androidx.scenecore)
     implementation(libs.extensions1.xr)
+    implementation(libs.androidx.compose.material.icons.extended)
+    implementation(libs.androidx.lifecycle.runtime.compose.v290)
     testImplementation(libs.junit)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
