@@ -1,6 +1,6 @@
 # AR-TileForge
 
-Procedural AR tile map generator for tabletop strategy games. Generate and place tiles directly in physical space using AR technology.
+Procedural tile map generator for tabletop strategy games. Create and edit grid-based maps with 6 terrain types, then export for use in game engines.
 
 ![Build Status](https://img.shields.io/badge/build-success-brightgreen)
 ![Android](https://img.shields.io/badge/android-14+-blue)
@@ -8,40 +8,32 @@ Procedural AR tile map generator for tabletop strategy games. Generate and place
 
 ## ✨ Features
 
-### 🌐 AR-Based Tile Placement
-- Detects flat surfaces (tables, floors, walls) using ARCore
-- Place tiles directly in physical space with natural gestures
-- Automatic scaling to match real-world dimensions (5cm per tile)
-
 ### 🎲 Procedural Map Generation
 - 6 tile types: Plains, Hills, Water, Forest, Mountain, Wasteland
-- Smart placement rules for realistic terrain transitions
-- Auto-generate starting maps with neighboring tiles
+- Auto-generate starting maps with a central tile and 4 neighbors
+- Configurable placement rules (coming soon)
+
+### 🎯 Interactive Tile Editor
+- **Tap to Select**: Choose tile type from palette at bottom (white border highlights selection)
+- **Tap to Place**: Tap empty gray cells to place a new tile
+- **Tap to Change**: Tap an existing tile to change it to the selected type
+- **Instant Feedback**: Tiles highlight green when their type matches the current selection
+- **Clear Map**: One-tap cleanup with toast confirmation
+
+### 📤 Export to Game Engines
+- **JSON**: Coordinate-based map data with bounds — importable into libGDX, KorGE, Unity, Godot
+- **PNG**: Sprite sheet atlas with labeled tile types, transparent background
 
 ### 🖼️ Minimalist Design
 - Clean, flat design style
 - Color-coded tile types for instant recognition
 - Visual borders for clear tile separation
 
-### 📤 Export to Game Engines
-- **JSON**: Coordinate-based map data for any engine
-- **PNG**: Sprite sheet atlas with tile mappings
-- Ready for import into libGDX, KorGE, Unity, or Godot
-
-### 🎯 Interactive Tile Editor
-- **Tap to Select**: Choose tile type from palette (visual indicator shows selection)
-- **Tap to Place**: Click empty cells to add tiles
-- **Tap to Change**: Click existing tiles to change their type
-- **Instant Feedback**: Tiles highlight green when type matches selection
-- **Clear Map**: One-tap cleanup with confirmation
-- **Export Tools**: Save maps as JSON and PNG sprite sheets
-
 ## Tech Stack
 
 - **Language**: Kotlin
-- **UI**: Jetpack Compose + AndroidX XR Compose
-- **AR**: ARCore (Android)
-- **Rendering**: Compose 2D (with libGDX option for 3D)
+- **UI**: Jetpack Compose (Material 3)
+- **Rendering**: Compose 2D
 - **Export**: JSON + PNG generation
 
 ## Tile Types
@@ -59,14 +51,13 @@ Procedural AR tile map generator for tabletop strategy games. Generate and place
 
 ### Prerequisites
 - Android 14+ (API 34+)
-- ARCore-supported device
 - Android Studio Hedgehog or later
 
 ### Build from Source
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/AR-TileForge.git
+git clone https://github.com/invweb/AR-TileForge.git
 cd AR-TileForge
 
 # Build the APK
@@ -76,34 +67,23 @@ cd AR-TileForge
 ./gradlew installDebug
 ```
 
-### Required Permissions
-
-The app requires camera access for AR functionality:
-- `android.hardware.camera.ar` - ARCore feature
-- `android.hardware.camera` - Camera access
-
 ## Usage
 
 ### 1. Start the App
-- Open AR-TileForge
-- Allow camera permissions when prompted
+- Open AR-TileForge — a starting map is generated automatically with a Plains center tile and 4 random neighbors
 
-### 2. Detect Surface
-- Point camera at a flat surface (table, floor, or wall)
-- Wait for plane detection confirmation
+### 2. Edit the Map
+- **Select a tile type** from the palette at the bottom (the selected button shows a **white border**)
+- **Place a tile**: Tap an empty gray cell in the grid
+- **Change a tile**: Tap any placed tile — it updates to the selected type
+  - If the tile already matches the selected type, it highlights with a **green border** as confirmation
+- **Clear the map**: Tap the "Clear Map" button (toast confirmation appears)
+- **Export**: Tap "Export" to save the current map as JSON + PNG
 
-### 3. Tile Editor Usage
-- **Select a tile type** from the palette at the bottom (click a colored button)
-  - The selected button will show a **white border** as visual feedback
-- **Place a tile**: Tap on empty cells in the grid
-- **Change existing tile**: Tap any placed tile to change its type to selected
-  - The tile will highlight with a **green border** if it already matches the selected type
-- **Clear entire map**: Tap "Clear Map" button
-- **View statistics**: Tile count and map bounds displayed in controls
-
-### 4. Export
-- Tap "Export" to save your map
-- Find exported files in `Android/data/com.zx_tole.artileforge/files/exports/`
+### 3. Export
+- Files are saved to `Android/data/com.zx_tole.artileforge/files/exports/`
+- JSON filename: `tilemap_<timestamp>.json`
+- PNG filename: `tilesprite_<timestamp>.png`
 
 ## Export Format
 
@@ -144,40 +124,44 @@ The app requires camera access for AR functionality:
 
 ```
 app/src/main/java/com/zx_tole/artileforge/
-├── MainActivity.kt              # Main entry point with AR integration
+├── MainActivity.kt              # Main entry point & tile grid UI
 ├── tile/                        # Tile system
-│   ├── TileType.kt             # Enum with tile types
-│   ├── TileData.kt             # Data class for tile state
-│   ├── TileGenerator.kt        # Procedural generation logic
-│   ├── TileRenderer.kt         # Compose renderer for tiles
-│   └── ARTilePlane.kt          # AR plane container
+│   ├── TileType.kt             # Enum with 6 terrain types + colors
+│   ├── TileData.kt             # Data class: type, coordinates, rotation
+│   ├── TileGenerator.kt        # Procedural generation + placement rules
+│   └── TileRenderer.kt         # Compose renderer with rotation support
 ├── ui/                          # UI components
-│   ├── TilePalette.kt          # Tile type selector
-│   └── TileLayerControls.kt    # Clear/Export controls
-├── export/                      # Export functionality
-│   ├── TileMapSerializer.kt    # JSON serialization
-│   └── SpriteSheetExporter.kt  # PNG generation
-└── ui/theme/                    # Theme configuration
-    └── Color.kt                # Tile color palette
+│   ├── TilePalette.kt          # Tile type selector with visual feedback
+│   ├── TileLayerControls.kt    # Clear & Export buttons
+│   └── theme/                  # Material 3 theme configuration
+└── export/                      # Export functionality
+    ├── TileMapSerializer.kt    # JSON serialization
+    └── SpriteSheetExporter.kt  # PNG sprite sheet generation
 ```
 
-## Future Enhancements
+## Roadmap
 
-### Phase 2 Features
-- [ ] ARCore integration for surface detection
-- [ ] Drag & drop placement gestures
-- [ ] Pinch-to-zoom for map scaling
-- [ ] Undo/Redo functionality
-- [ ] Advanced placement rules
-- [ ] Tile rotation support
-- [ ] Tile editing with visual feedback (selected type highlighting)
+### ✅ Completed
+- [x] Interactive tile editor with tap-to-place / tap-to-change
+- [x] Visual feedback (selection highlight, type-match green border)
+- [x] 6 terrain types with minimalist flat design
+- [x] JSON + PNG export with toast notifications
+- [x] Procedural map generation (center tile + 4 neighbors)
+- [x] `TileRenderer` with rotation support
 
-### Phase 3 Features
-- [ ] 3D rendering with libGDX
-- [ ] Procedural terrain textures
-- [ ] Lighting and shadows
-- [ ] KMP shared logic (Android/iOS/Desktop)
-- [ ] Custom tile uploads
+### 🟡 Next Priority
+- [ ] Undo / Redo (action history with stack)
+- [ ] Drag-to-pan and pinch-to-zoom for large maps
+- [ ] Save / Load project files (restore full tile map state)
+- [ ] Enable placement rules (mountains form chains, forests near water, etc.)
+- [ ] Rotate tiles via long-press
+
+### 🔮 Future
+- [ ] 3D rendering with libGDX / AndroidXR
+- [ ] Procedural terrain textures & lighting
+- [ ] KMP shared logic (Android / iOS / Desktop)
+- [ ] Custom tile image uploads (PNG assets)
+- [ ] ARCore surface detection & world-scale placement
 
 ## License
 
@@ -193,15 +177,10 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 4. Push to the branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
 
-## Support
-
-For support, join our Discord community or open an issue on GitHub.
-
 ## Acknowledgments
 
-- ARCore for excellent AR development tools
-- Android Compose team for amazing UI framework
+- Android Compose team for the amazing declarative UI framework
 
 ---
 
-Made with ❤️ for tabletop gamers and AR enthusiasts
+Made with ❤️ for tabletop gamers

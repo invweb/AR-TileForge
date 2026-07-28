@@ -1,13 +1,9 @@
 package com.zx_tole.artileforge
 
-import android.Manifest
-import android.annotation.SuppressLint
-import android.content.pm.PackageManager
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -16,14 +12,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.foundation.lazy.grid.rememberLazyGridState
-import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -31,7 +21,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -42,7 +31,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.core.content.ContextCompat
 import com.zx_tole.artileforge.export.SpriteSheetExporter
 import com.zx_tole.artileforge.export.TileMapSerializer
 import com.zx_tole.artileforge.tile.TileData
@@ -54,34 +42,13 @@ import com.zx_tole.artileforge.ui.TilePalette
 import com.zx_tole.artileforge.ui.theme.ARTileForgeTheme
 
 class MainActivity : ComponentActivity() {
-
-    private lateinit var cameraPermissionLauncher: androidx.activity.result.ActivityResultLauncher<String>
-
-    @SuppressLint("RestrictedApi")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // Remove enableEdgeToEdge() to let Scaffold handle layout properly
-
-        // Register permission launcher
-        cameraPermissionLauncher = registerForActivityResult(
-            ActivityResultContracts.RequestPermission()
-        ) { isGranted ->
-            // Permission granted callback
-        }
-
-        // Check and request camera permission
-        val hasPermission = ContextCompat.checkSelfPermission(
-            this, Manifest.permission.CAMERA
-        ) == PackageManager.PERMISSION_GRANTED
-
-        if (!hasPermission) {
-            cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
-        }
 
         setContent {
             ARTileForgeTheme {
                 Surface {
-                    MainContent(hasPermission)
+                    MainContent()
                 }
             }
         }
@@ -90,27 +57,26 @@ class MainActivity : ComponentActivity() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MainContent(hasPermission: Boolean, modifier: Modifier = Modifier) {
+fun MainContent(modifier: Modifier = Modifier) {
     val context = LocalContext.current
-    
+
     val initialTiles = mutableMapOf<Int, TileData>().apply {
         val startTile = TileGenerator.generateStartTile()
         put(packInt(0, 0), startTile)
-        
+
         val neighbors = TileGenerator.generateNeighbors(0, 0)
         neighbors.forEach { tile ->
             put(packInt(tile.x, tile.y), tile)
         }
     }
-    
+
     var tiles by remember { mutableStateOf(initialTiles) }
     var selectedTileType by remember { mutableStateOf(TileType.Plains) }
-    var tilesCount by remember { mutableStateOf(initialTiles.size) }
-    
+
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("AR Tile Map") },
+                title = { Text("Tile Map Editor") },
                 modifier = Modifier.background(MaterialTheme.colorScheme.primary)
             )
         },
@@ -124,13 +90,15 @@ fun MainContent(hasPermission: Boolean, modifier: Modifier = Modifier) {
                         .padding(8.dp)
                 )
                 TileLayerControls(
-                    onClear = { 
+                    onClear = {
+                        Toast.makeText(context, "Map cleared", Toast.LENGTH_SHORT).show()
                         tiles = mutableMapOf()
-                        tilesCount = 0
                     },
                     onExport = {
-                        exportTileMap(context, tiles.values.toList())
-                        tilesCount = tiles.size
+                        val success = exportTileMap(context, tiles.values.toList())
+                        if (success) {
+                            Toast.makeText(context, "${tiles.size} tiles exported", Toast.LENGTH_SHORT).show()
+                        }
                     },
                     tilesCount = tiles.size,
                     modifier = Modifier
@@ -151,12 +119,10 @@ fun MainContent(hasPermission: Boolean, modifier: Modifier = Modifier) {
             // Render tiles in a grid
             val tileMap = tiles.values.associateBy { Pair(it.x, it.y) }
             val bounds = TileGenerator.calculateBounds(tileMap)
-            
+
             if (bounds.width > 0 && bounds.height > 0) {
                 Column(
-                    modifier = Modifier
-                        .padding(horizontal = 8.dp)
-                        .clickable { println("Column clicked") },
+                    modifier = Modifier.padding(horizontal = 8.dp),
                     verticalArrangement = Arrangement.spacedBy(2.dp)
                 ) {
                     for (y in bounds.minY..bounds.maxY) {
@@ -168,16 +134,16 @@ fun MainContent(hasPermission: Boolean, modifier: Modifier = Modifier) {
                                 if (tile != null) {
                                     TileRenderer(
                                         tileType = tile.type,
+                                        rotation = tile.rotation,
                                         modifier = Modifier
                                             .size(48.dp)
                                             .border(3.dp, if (tile.type == selectedTileType) Color(0xFF00FF00) else Color.Transparent),
                                         onClick = {
-                                            println("Clicking tile at (${tile.x}, ${tile.y}), changing to ${selectedTileType.name}")
                                             val newTile = tile.copy(type = selectedTileType)
                                             tiles[packInt(tile.x, tile.y)] = newTile
                                         }
                                     )
-                } else {
+                                } else {
                                     // Empty cell - add new tile when clicked
                                     Box(
                                         modifier = Modifier
@@ -193,7 +159,6 @@ fun MainContent(hasPermission: Boolean, modifier: Modifier = Modifier) {
                                                         x = x,
                                                         y = y
                                                     )
-                                                    println("Placing tile at (${newTile.x}, ${newTile.y}) type=${newTile.type.name}")
                                                     tiles[packInt(newTile.x, newTile.y)] = newTile
                                                 }
                                         )
@@ -205,8 +170,9 @@ fun MainContent(hasPermission: Boolean, modifier: Modifier = Modifier) {
                 }
             } else {
                 Text(
-                    text = "No tiles placed yet",
-                    style = MaterialTheme.typography.bodyMedium
+                    text = "Tap empty cells to place tiles",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color.Gray
                 )
             }
         }
@@ -215,23 +181,36 @@ fun MainContent(hasPermission: Boolean, modifier: Modifier = Modifier) {
 
 /**
  * Export tile map to JSON and PNG
+ * @return true if export succeeded
  */
-private fun exportTileMap(context: android.content.Context, tiles: List<TileData>) {
+private fun exportTileMap(context: android.content.Context, tiles: List<TileData>): Boolean {
+    val exportsDir = context.getExternalFilesDir(null)?.apply { mkdirs() } ?: run {
+        Toast.makeText(context, "Export failed", Toast.LENGTH_SHORT).show()
+        return false
+    }
+
     // Export JSON
-    val jsonSerializer = TileMapSerializer()
-    val json = jsonSerializer.serialize(tiles)
-    
-    val exportsDir = context.getExternalFilesDir(null)?.apply { mkdirs() } ?: return
-    val jsonFile = java.io.File(exportsDir, "tilemap_${System.currentTimeMillis()}.json")
-    jsonFile.writeText(json)
-    
+    try {
+        val jsonSerializer = TileMapSerializer()
+        val json = jsonSerializer.serialize(tiles)
+        val jsonFile = java.io.File(exportsDir, "tilemap_${System.currentTimeMillis()}.json")
+        jsonFile.writeText(json)
+    } catch (e: Exception) {
+        Toast.makeText(context, "JSON export failed: ${e.message}", Toast.LENGTH_SHORT).show()
+        return false
+    }
+
     // Export PNG
-    val spriteExporter = SpriteSheetExporter()
-    val pngFile = java.io.File(exportsDir, "tilesprite_${System.currentTimeMillis()}.png")
-    spriteExporter.export(tiles, pngFile.absolutePath)
-    
-    // Show toast (in real app, use proper notification)
-    println("Exported to: ${jsonFile.absolutePath}, ${pngFile.absolutePath}")
+    try {
+        val spriteExporter = SpriteSheetExporter()
+        val pngFile = java.io.File(exportsDir, "tilesprite_${System.currentTimeMillis()}.png")
+        spriteExporter.export(tiles, pngFile.absolutePath)
+    } catch (e: Exception) {
+        Toast.makeText(context, "PNG export failed: ${e.message}", Toast.LENGTH_SHORT).show()
+        return false
+    }
+
+    return true
 }
 
 /**
@@ -248,6 +227,6 @@ private fun packInt(x: Int, y: Int): Int {
 @Composable
 fun MainContentPreview() {
     ARTileForgeTheme {
-        MainContent(hasPermission = true)
+        MainContent()
     }
 }
