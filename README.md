@@ -164,13 +164,14 @@ app/src/main/java/com/zx_tole/artileforge/
 - [x] Drag-to-pan and pinch-to-zoom for large maps
 - [x] Save / Load project files (JSON import/export)
 - [x] Tile rotation mode (toggle, click to rotate 90°)
+- [x] Placement rules (Forests near Water, Mountains chained, Hills near Mountains)
 
 ### 🟡 Next Priority
-- [ ] Enable placement rules (mountains near mountains, forests near water, etc.)
 - [ ] Rotate tiles via long-press
 - [ ] Snapping grid / visual guide lines
 - [ ] Multiple map support (tabs or list)
 - [ ] Tile duplication via copy/paste
+- [ ] Placement rules toggle UI (enable/disable per rule)
 
 ### 🔮 Future
 - [ ] 3D rendering with libGDX / AndroidXR
