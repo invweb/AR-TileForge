@@ -2,6 +2,7 @@ package com.zx_tole.artileforge.export
 
 import com.zx_tole.artileforge.tile.TileData
 import com.zx_tole.artileforge.tile.TileGenerator
+import com.zx_tole.artileforge.tile.TileType
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
@@ -52,4 +53,36 @@ class TileMapSerializer {
         file.writeText(serialize(tiles))
         return file
     }
+
+    /**
+     * Deserialize JSON string to tile list
+     */
+    fun deserialize(jsonString: String): List<TileData> {
+        val json = JSONObject(jsonString)
+        val tilesArray = json.getJSONArray("tiles")
+        val tiles = mutableListOf<TileData>()
+
+        for (i in 0 until tilesArray.length()) {
+            val tileJson = tilesArray.getJSONObject(i)
+            val type = TileType.valueOf(tileJson.getString("type"))
+            val x = tileJson.getInt("x")
+            val y = tileJson.getInt("y")
+            val rotation = tileJson.getInt("rotation")
+            tiles.add(TileData(type = type, x = x, y = y, rotation = rotation))
+        }
+
+        return tiles
+    }
+
+    /**
+     * Load tile map from file
+     */
+    fun loadFromFile(filePath: String): List<TileData> {
+        val file = File(filePath)
+        if (!file.exists()) {
+            throw IllegalArgumentException("File not found: $filePath")
+        }
+        return deserialize(file.readText())
+    }
+
 }

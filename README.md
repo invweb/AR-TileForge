@@ -18,6 +18,10 @@ Procedural tile map generator for tabletop strategy games. Create and edit grid-
 - **Tap to Place**: Tap empty gray cells to place a new tile
 - **Tap to Change**: Tap an existing tile to change it to the selected type
 - **Instant Feedback**: Tiles highlight green when their type matches the current selection
+- **Pan & Zoom**: Pinch-to-zoom and drag-to-pan for large maps
+- **Rotation Mode**: Toggle rotation ON/OFF — in rotation mode, tapping rotates tiles 90°
+- **Undo/Redo**: Full action history with Undo/Redo buttons
+- **Save/Load**: Save project as JSON file and restore it later via file picker
 - **Clear Map**: One-tap cleanup with toast confirmation
 
 ### 📤 Export to Game Engines
@@ -77,11 +81,19 @@ cd AR-TileForge
 - **Place a tile**: Tap an empty gray cell in the grid
 - **Change a tile**: Tap any placed tile — it updates to the selected type
   - If the tile already matches the selected type, it highlights with a **green border** as confirmation
+- **Rotate tiles**: Toggle the Rotate button in the top bar to ON, then tap tiles to rotate them 90°
+- **Pan & Zoom**: Pinch to zoom in/out, drag to pan across the map
+- **Undo/Redo**: Use the back/forward arrow buttons to undo or redo changes
+- **Save/Load**: Tap Save to download a JSON project file; tap Load to pick a JSON file and restore your map
 - **Clear the map**: Tap the "Clear Map" button (toast confirmation appears)
 - **Export**: Tap "Export" to save the current map as JSON + PNG
 
 ### 3. Export
 - Files are saved to `Android/data/com.zx_tole.artileforge/files/exports/`
+
+### 4. Save / Load
+- **Save**: Tap the Save button (disk icon) to download the current map as a JSON file via the system file picker
+- **Load**: Tap the Load button (download icon), select a previously saved JSON file — your map is restored with full undo/redo history cleared and rebuilt
 - JSON filename: `tilemap_<timestamp>.json`
 - PNG filename: `tilesprite_<timestamp>.png`
 
@@ -148,13 +160,17 @@ app/src/main/java/com/zx_tole/artileforge/
 - [x] JSON + PNG export with toast notifications
 - [x] Procedural map generation (center tile + 4 neighbors)
 - [x] `TileRenderer` with rotation support
+- [x] Undo / Redo (action history with stack)
+- [x] Drag-to-pan and pinch-to-zoom for large maps
+- [x] Save / Load project files (JSON import/export)
+- [x] Tile rotation mode (toggle, click to rotate 90°)
 
 ### 🟡 Next Priority
-- [ ] Undo / Redo (action history with stack)
-- [ ] Drag-to-pan and pinch-to-zoom for large maps
-- [ ] Save / Load project files (restore full tile map state)
-- [ ] Enable placement rules (mountains form chains, forests near water, etc.)
+- [ ] Enable placement rules (mountains near mountains, forests near water, etc.)
 - [ ] Rotate tiles via long-press
+- [ ] Snapping grid / visual guide lines
+- [ ] Multiple map support (tabs or list)
+- [ ] Tile duplication via copy/paste
 
 ### 🔮 Future
 - [ ] 3D rendering with libGDX / AndroidXR

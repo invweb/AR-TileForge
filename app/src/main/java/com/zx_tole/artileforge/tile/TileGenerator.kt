@@ -21,12 +21,23 @@ object TileGenerator {
     )
     
     /**
-     * Default configuration: simple mode, any combination allowed
+     * Default configuration: strict rules enabled
      */
-    val defaultRules = RulesConfig(allowAnyCombination = true)
+    val defaultRules = RulesConfig(
+        waterCannotBeOnEdge = false,
+        forestRequiresNearbyWater = true,
+        mountainsFormChains = true,
+        allowAnyCombination = false
+    )
     
     /**
      * Check if a tile can be placed at the given position with the specified type.
+     * 
+     * Rules:
+     * - Forest requires at least one adjacent Water tile
+     * - Mountains must be adjacent to at least one other Mountain tile
+     * - Hills require at least one Mountain neighbor (terrain progression)
+     * - Plains and Wasteland are always allowed
      * 
      * @param tiles The current map of placed tiles
      * @param x The x-coordinate to place the tile
@@ -48,17 +59,11 @@ object TileGenerator {
         
         val neighbors = getNeighbors(tiles, x, y)
         
-        // Rule: Water cannot be on the edge of the map
-        if (rules.waterCannotBeOnEdge && type == TileType.Water) {
-            if (neighbors.isEmpty()) {
-                return false
-            }
-        }
-        
         // Rule: Forest requires nearby water
         if (rules.forestRequiresNearbyWater && type == TileType.Forest) {
             val hasNearbyWater = neighbors.values.any { it.type == TileType.Water }
             if (!hasNearbyWater) {
+                println("PLACEMENT RULE: Forest requires nearby Water tile - blocked")
                 return false
             }
         }
@@ -67,6 +72,16 @@ object TileGenerator {
         if (rules.mountainsFormChains && type == TileType.Mountain) {
             val hasMountainNeighbor = neighbors.values.any { it.type == TileType.Mountain }
             if (!hasMountainNeighbor && neighbors.isNotEmpty()) {
+                println("PLACEMENT RULE: Mountain requires adjacent Mountain - blocked")
+                return false
+            }
+        }
+        
+        // Rule: Hills require at least one Mountain neighbor
+        if (type == TileType.Hills) {
+            val hasMountainNeighbor = neighbors.values.any { it.type == TileType.Mountain }
+            if (!hasMountainNeighbor && neighbors.isNotEmpty()) {
+                println("PLACEMENT RULE: Hills requires adjacent Mountain - blocked")
                 return false
             }
         }
@@ -87,16 +102,18 @@ object TileGenerator {
     
     /**
      * Generate neighboring tiles around a center position
+     * Respects placement rules.
      * 
      * @param centerX The x-coordinate of the center
      * @param centerY The y-coordinate of the center
+     * @param existingTiles The existing tiles (for rule checking)
      * @param rules Placement rules
-     * @param count Number of neighbors to generate (default: 4)
      * @return List of generated tiles
      */
     fun generateNeighbors(
         centerX: Int,
         centerY: Int,
+        existingTiles: List<TileData>,
         rules: RulesConfig = defaultRules
     ): List<TileData> {
         val directions = listOf(
@@ -106,37 +123,54 @@ object TileGenerator {
             Pair(0, -1)   // Down
         )
         
-        return directions.map { pair ->
-            val (dx, dy) = pair
-            val type = getRandomTileType(rules)
-            TileData(
-                type = type,
-                x = centerX + dx,
-                y = centerY + dy
-            )
-        }
-    }
-    
-    /**
-     * Get a random tile type based on rules
-     */
-    private fun getRandomTileType(rules: RulesConfig): TileType {
-        if (rules.allowAnyCombination) {
-            return TileType.entries.random()
-        }
+        val tileMap = existingTiles.associateBy { Pair(it.x, it.y) }
+        val generated = mutableListOf<TileData>()
         
-        // Weighted random based on rule constraints
-        val availableTypes = TileType.entries.filter { type ->
-            // Filter based on current rules
-            when (type) {
-                TileType.Water -> !rules.waterCannotBeOnEdge || true
-                TileType.Forest -> !rules.forestRequiresNearbyWater || true
-                TileType.Mountain -> !rules.mountainsFormChains || true
-                else -> true
+        for (pair in directions) {
+            val (dx, dy) = pair
+            val nx = centerX + dx
+            val ny = centerY + dy
+            
+            // Try to generate a valid type (up to 5 attempts)
+            var placed = false
+            for (attempt in 1..5) {
+                val candidates = if (rules.allowAnyCombination) {
+                    TileType.entries.toList()
+                } else {
+                    // Weighted: prioritize natural terrain distribution
+                    val pool = mutableListOf<TileType>()
+                    repeat(4) { pool += TileType.Plains }
+                    repeat(3) { pool += TileType.Hills }
+                    repeat(3) { pool += TileType.Water }
+                    repeat(3) { pool += TileType.Forest }
+                    repeat(2) { pool += TileType.Mountain }
+                    repeat(1) { pool += TileType.Wasteland }
+                    pool
+                }
+                
+                val type = candidates.random()
+                if (canPlaceTile(tileMap + (generated.associateBy { Pair(it.x, it.y) }), nx, ny, type, rules)) {
+                    generated.add(TileData(type = type, x = nx, y = ny))
+                    println("Generated neighbor at ($nx, $ny) = ${type.name}")
+                    placed = true
+                    break
+                }
+            }
+            
+            // Fallback: allow placement even if rules block it (for initial generation)
+            if (!placed) {
+                val fallbackTypes = when {
+                    existingTiles.any { it.type == TileType.Mountain } -> listOf(TileType.Mountain, TileType.Hills, TileType.Forest)
+                    existingTiles.any { it.type == TileType.Water } -> listOf(TileType.Forest, TileType.Plains, TileType.Water)
+                    else -> listOf(TileType.Plains, TileType.Hills, TileType.Water, TileType.Forest, TileType.Mountain)
+                }
+                val fallbackType = fallbackTypes.random()
+                generated.add(TileData(type = fallbackType, x = nx, y = ny))
+                println("Fallback neighbor at ($nx, $ny) = ${fallbackType.name}")
             }
         }
         
-        return availableTypes.random()
+        return generated
     }
     
     /**

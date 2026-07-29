@@ -1,9 +1,12 @@
 package com.zx_tole.artileforge
 
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -23,9 +26,11 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.automirrored.filled.RotateRight
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material.icons.filled.Share
+
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -87,6 +92,32 @@ class UndoRedoManager {
 
 class MainActivity : ComponentActivity() {
     private val undoRedo = UndoRedoManager()
+    private val filePicker = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
+        if (uri != null) {
+            try {
+                val json = contentResolver.openInputStream(uri)?.use { it.readBytes().decodeToString() }
+                if (json != null) {
+                    val loadedTiles = TileMapSerializer().deserialize(json)
+                    undoRedo.clear()
+                    undoRedo.push(loadedTiles)
+                    Toast.makeText(this, "Loaded ${loadedTiles.size} tiles", Toast.LENGTH_SHORT).show()
+                }
+            } catch (e: Exception) {
+                Toast.makeText(this, "Failed to load: ${e.message}", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+    private val fileSaver = registerForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri: Uri? ->
+        if (uri != null) {
+            try {
+                val json = TileMapSerializer().serialize(undoRedo.current)
+                contentResolver.openOutputStream(uri)?.use { it.write(json.toByteArray()) }
+                Toast.makeText(this, "Saved", Toast.LENGTH_SHORT).show()
+            } catch (e: Exception) {
+                Toast.makeText(this, "Failed to save: ${e.message}", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -104,7 +135,8 @@ class MainActivity : ComponentActivity() {
                         canRedo = undoRedo.canRedo,
                         onClear = { undoRedo.clear(); undoRedo.push(emptyList()) },
                         onExport = { exportTiles(this, it) },
-                        onSave = { saveProject(this, it) }
+                        onSave = { fileSaver.launch("tilemap_${System.currentTimeMillis()}.json") },
+                        onLoad = { filePicker.launch("application/json") }
                     )
                 }
             }
@@ -113,7 +145,7 @@ class MainActivity : ComponentActivity() {
 
     private fun generateInitialTiles(): List<TileData> {
         val tiles = mutableListOf(TileGenerator.generateStartTile())
-        tiles.addAll(TileGenerator.generateNeighbors(0, 0))
+        tiles.addAll(TileGenerator.generateNeighbors(0, 0, tiles))
         return tiles
     }
 }
@@ -131,7 +163,8 @@ fun MainContent(
     canRedo: Boolean,
     onClear: () -> Unit,
     onExport: (List<TileData>) -> Unit,
-    onSave: (List<TileData>) -> Unit
+    onSave: () -> Unit,
+    onLoad: () -> Unit
 ) {
     val context = LocalContext.current
     var selectedType by remember { mutableStateOf(TileType.Plains) }
@@ -139,6 +172,7 @@ fun MainContent(
     var panX by remember { mutableFloatStateOf(0f) }
     var panY by remember { mutableFloatStateOf(0f) }
     var scale by remember { mutableFloatStateOf(1f) }
+    var ruleViolationMessage by remember { mutableStateOf<String?>(null) }
 
     val transformState = rememberTransformableState { zoomChange, panZoomChange, _ ->
         scale = (scale * zoomChange).coerceIn(0.5f, 3f)
@@ -171,8 +205,11 @@ fun MainContent(
                             if (rotationMode) "Rotate ON" else "Rotate"
                         )
                     }
-                    IconButton(onClick = { onSave(tiles) }) {
+                    IconButton(onClick = onSave) {
                         Icon(Icons.Default.Save, "Save")
+                    }
+                    IconButton(onClick = onLoad) {
+                        Icon(Icons.Default.Download, "Load")
                     }
                     IconButton(onClick = { onExport(tiles) }) {
                         Icon(Icons.Default.Share, "Export")
@@ -231,15 +268,14 @@ fun MainContent(
                                 for (x in xMin..xMax) {
                                     val tile = tileMap[Pair(x, y)]
                                     if (tile != null) {
-                                        val effectiveType = if (rotationMode) tile.type else selectedType
                                         TileRenderer(
                                             tileType = tile.type,
                                             rotation = tile.rotation,
                                             modifier = Modifier
                                                 .size(48.dp)
                                                 .border(
-                                                    3.dp,
-                                                    if (tile.type == selectedType) Color(0xFF00FF00) else Color.Transparent
+                                                    2.dp,
+                                                    if (tile.type == selectedType) Color.Green.copy(alpha = 0.7f) else Color.Transparent
                                                 )
                                                 .clickable {
                                                     val newTile = if (rotationMode) {
@@ -260,9 +296,24 @@ fun MainContent(
                                                 .size(48.dp)
                                                 .background(Color(0xFFE0E0E0))
                                                 .clickable {
-                                                    onTilesChanged(tiles.toMutableList().apply {
-                                                        add(TileData(type = selectedType, x = x, y = y))
-                                                    })
+                                                    val currentMap = tiles.associateBy { Pair(it.x, it.y) }
+                                                    val canPlace = TileGenerator.canPlaceTile(currentMap, x, y, selectedType)
+                                                    
+                                                    if (canPlace) {
+                                                        onTilesChanged(tiles.toMutableList().apply {
+                                                            add(TileData(type = selectedType, x = x, y = y))
+                                                        })
+                                                    } else {
+                                                        val msg = when (selectedType) {
+                                                            TileType.Forest -> "Forest requires nearby Water!"
+                                                            TileType.Mountain -> "Mountain must be adjacent to Mountain!"
+                                                            TileType.Hills -> "Hills require adjacent Mountain!"
+                                                            else -> null
+                                                        }
+                                                        if (msg != null) {
+                                                            Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+                                                        }
+                                                    }
                                                 }
                                         )
                                     }
@@ -340,7 +391,8 @@ fun MainContentPreview() {
             canRedo = false,
             onClear = {},
             onExport = {},
-            onSave = {}
+            onSave = {},
+            onLoad = {}
         )
     }
 }
