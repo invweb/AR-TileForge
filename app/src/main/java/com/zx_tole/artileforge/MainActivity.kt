@@ -1,6 +1,5 @@
 package com.zx_tole.artileforge
 
-import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.widget.Toast
@@ -40,7 +39,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -49,7 +47,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -61,6 +58,7 @@ import com.zx_tole.artileforge.tile.TileData
 import com.zx_tole.artileforge.tile.TileGenerator
 import com.zx_tole.artileforge.tile.TileRenderer
 import com.zx_tole.artileforge.tile.TileType
+import com.zx_tole.artileforge.ui.RuleTogglePanel
 import com.zx_tole.artileforge.ui.TilePalette
 import com.zx_tole.artileforge.ui.theme.ARTileForgeTheme
 import kotlin.math.roundToInt
@@ -70,6 +68,8 @@ import kotlin.math.roundToInt
 class UndoRedoManager {
     private val history = mutableListOf<List<TileData>>()
     private var index = 0
+    var rulesConfig: TileGenerator.RulesConfig = TileGenerator.defaultRules
+        set
 
     init { history.add(emptyList()); index = 0 }
 
@@ -100,6 +100,7 @@ class MainActivity : ComponentActivity() {
                     val loadedTiles = TileMapSerializer().deserialize(json)
                     undoRedo.clear()
                     undoRedo.push(loadedTiles)
+                    undoRedo.rulesConfig = TileGenerator.defaultRules
                     Toast.makeText(this, "Loaded ${loadedTiles.size} tiles", Toast.LENGTH_SHORT).show()
                 }
             } catch (e: Exception) {
@@ -136,7 +137,9 @@ class MainActivity : ComponentActivity() {
                         onClear = { undoRedo.clear(); undoRedo.push(emptyList()) },
                         onExport = { exportTiles(this, it) },
                         onSave = { fileSaver.launch("tilemap_${System.currentTimeMillis()}.json") },
-                        onLoad = { filePicker.launch("application/json") }
+                        onLoad = { filePicker.launch("application/json") },
+                        rulesConfig = undoRedo.rulesConfig,
+                        onRulesConfigChanged = { undoRedo.rulesConfig = it }
                     )
                 }
             }
@@ -145,7 +148,7 @@ class MainActivity : ComponentActivity() {
 
     private fun generateInitialTiles(): List<TileData> {
         val tiles = mutableListOf(TileGenerator.generateStartTile())
-        tiles.addAll(TileGenerator.generateNeighbors(0, 0, tiles))
+        tiles.addAll(TileGenerator.generateNeighbors(0, 0, tiles, undoRedo.rulesConfig))
         return tiles
     }
 }
@@ -164,7 +167,9 @@ fun MainContent(
     onClear: () -> Unit,
     onExport: (List<TileData>) -> Unit,
     onSave: () -> Unit,
-    onLoad: () -> Unit
+    onLoad: () -> Unit,
+    rulesConfig: TileGenerator.RulesConfig,
+    onRulesConfigChanged: (TileGenerator.RulesConfig) -> Unit
 ) {
     val context = LocalContext.current
     var selectedType by remember { mutableStateOf(TileType.Plains) }
@@ -172,15 +177,12 @@ fun MainContent(
     var panX by remember { mutableFloatStateOf(0f) }
     var panY by remember { mutableFloatStateOf(0f) }
     var scale by remember { mutableFloatStateOf(1f) }
-    var ruleViolationMessage by remember { mutableStateOf<String?>(null) }
 
     val transformState = rememberTransformableState { zoomChange, panZoomChange, _ ->
         scale = (scale * zoomChange).coerceIn(0.5f, 3f)
         panX += panZoomChange.x
         panY += panZoomChange.y
     }
-
-
 
     Scaffold(
         topBar = {
@@ -215,6 +217,10 @@ fun MainContent(
         },
         bottomBar = {
             Column {
+                RuleTogglePanel(
+                    rulesConfig = rulesConfig,
+                    onRulesChanged = onRulesConfigChanged
+                )
                 TilePalette(selectedType = selectedType, onTypeSelected = { selectedType = it })
                 Row(
                     modifier = Modifier
@@ -287,14 +293,18 @@ fun MainContent(
                                             onClick = {}
                                         )
                                     } else {
+                                        val currentMap = tiles.associateBy { Pair(it.x, it.y) }
+                                        val canPlace = TileGenerator.canPlaceTile(currentMap, x, y, selectedType, rulesConfig)
+                                        val isBlocked = !canPlace
+
                                         Box(
                                             modifier = Modifier
                                                 .size(48.dp)
-                                                .background(Color(0xFFE0E0E0))
+                                                .background(
+                                                    if (isBlocked) Color(0xFFE0A0A0) else Color(0xFFE0E0E0),
+                                                    MaterialTheme.shapes.medium
+                                                )
                                                 .clickable {
-                                                    val currentMap = tiles.associateBy { Pair(it.x, it.y) }
-                                                    val canPlace = TileGenerator.canPlaceTile(currentMap, x, y, selectedType)
-                                                    
                                                     if (canPlace) {
                                                         onTilesChanged(tiles.toMutableList().apply {
                                                             add(TileData(type = selectedType, x = x, y = y))
@@ -363,6 +373,7 @@ private fun exportTiles(context: android.content.Context, tiles: List<TileData>)
 
     Toast.makeText(context, "Map exported (${tiles.size} tiles)", Toast.LENGTH_SHORT).show()
 }
+
 // ==================== Preview ====================
 
 @Preview(showBackground = true)
@@ -379,7 +390,9 @@ fun MainContentPreview() {
             onClear = {},
             onExport = {},
             onSave = {},
-            onLoad = {}
+            onLoad = {},
+            rulesConfig = TileGenerator.defaultRules,
+            onRulesConfigChanged = {}
         )
     }
 }

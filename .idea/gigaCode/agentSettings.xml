@@ -63,6 +63,9 @@
         <Execute>
           <option name="pattern" value="mkdir -p /Users/vasiliikarpenko/AndroidStudioProjects/ARTileForge/.gigacode/plans" />
         </Execute>
+        <Execute>
+          <option name="pattern" value="echo *" />
+        </Execute>
       </list>
     </option>
   </component>
