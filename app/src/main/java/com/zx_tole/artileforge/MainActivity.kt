@@ -180,11 +180,7 @@ fun MainContent(
         panY += panZoomChange.y
     }
 
-    LaunchedEffect(tiles.size) {
-        if (tiles.isNotEmpty()) {
-            Toast.makeText(context, "${tiles.size} tiles loaded", Toast.LENGTH_SHORT).show()
-        }
-    }
+
 
     Scaffold(
         topBar = {
@@ -367,15 +363,6 @@ private fun exportTiles(context: android.content.Context, tiles: List<TileData>)
 
     Toast.makeText(context, "Map exported (${tiles.size} tiles)", Toast.LENGTH_SHORT).show()
 }
-
-private fun saveProject(context: android.content.Context, tiles: List<TileData>) {
-    if (tiles.isEmpty()) {
-        Toast.makeText(context, "No tiles to save", Toast.LENGTH_SHORT).show()
-        return
-    }
-    Toast.makeText(context, "Project saved (${tiles.size} tiles)", Toast.LENGTH_SHORT).show()
-}
-
 // ==================== Preview ====================
 
 @Preview(showBackground = true)
