@@ -69,7 +69,6 @@ class UndoRedoManager {
     private val history = mutableListOf<List<TileData>>()
     private var index = 0
     var rulesConfig: TileGenerator.RulesConfig = TileGenerator.defaultRules
-        set
 
     init { history.add(emptyList()); index = 0 }
 

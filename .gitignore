@@ -15,4 +15,5 @@
 .externalNativeBuild
 .cxx
 local.properties
-.kotlin/
+.kotlin/*
+.kilo/*
